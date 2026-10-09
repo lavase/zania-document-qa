@@ -11,6 +11,9 @@ import json
 import logging
 import time
 
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 MAX_QUESTIONS = 50
 MAX_CONCURRENT_QUESTIONS = 5
@@ -28,6 +31,17 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+app.mount(
+    "/static",
+    StaticFiles(directory="app/static"),
+    name="static",
+)
+
+@app.get("/")
+async def home():
+    return FileResponse(
+        "app/static/index.html"
+    )
 
 @app.get("/health")
 async def health_check():

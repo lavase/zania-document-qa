@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zania Document QA</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        h1 {
+            margin-bottom: 8px;
+        }
+
+        .field {
+            margin: 20px 0;
+        }
+
+        button {
+            padding: 10px 18px;
+            cursor: pointer;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .result {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .source {
+            background: #f5f5f5;
+            padding: 8px;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Zania Document QA</h1>
+
+    <p>
+        Upload a JSON file containing questions and a PDF or JSON document.
+    </p>
+
+    <div class="field">
+        <label>
+            Questions JSON:
+        </label>
+        <br>
+        <input
+            type="file"
+            id="questionsFile"
+            accept=".json"
+        >
+    </div>
+
+    <div class="field">
+        <label>
+            Document:
+        </label>
+        <br>
+        <input
+            type="file"
+            id="documentFile"
+            accept=".pdf,.json"
+        >
+    </div>
+
+    <button onclick="submitFiles()">
+        Ask Questions
+    </button>
+
+    <div id="status"></div>
+
+    <div id="results"></div>
+
+
+    <script>
+        async function submitFiles() {
+            const questionsFile =
+                document.getElementById("questionsFile").files[0];
+
+            const documentFile =
+                document.getElementById("documentFile").files[0];
+
+            const status =
+                document.getElementById("status");
+
+            const results =
+                document.getElementById("results");
+
+            results.innerHTML = "";
+
+            if (!questionsFile || !documentFile) {
+                status.textContent =
+                    "Please select both files.";
+                return;
+            }
+
+            const formData = new FormData();
+
+            formData.append(
+                "questions_file",
+                questionsFile
+            );
+
+            formData.append(
+                "document_file",
+                documentFile
+            );
+
+            status.textContent =
+                "Processing...";
+
+            try {
+                const response = await fetch(
+                    "/qa",
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+                const data =
+                    await response.json();
+
+                if (!response.ok) {
+                    status.textContent =
+                        data.detail || "Request failed.";
+                    return;
+                }
+
+                status.textContent =
+                    "Completed.";
+
+                displayResults(data.results);
+
+            } catch (error) {
+                status.textContent =
+                    "Unable to reach the server.";
+            }
+        }
+
+
+        function displayResults(items) {
+            const container =
+                document.getElementById("results");
+
+            for (const item of items) {
+                const result =
+                    document.createElement("div");
+
+                result.className = "result";
+
+                const question =
+                    document.createElement("h3");
+
+                question.textContent =
+                    item.question;
+
+                const answer =
+                    document.createElement("p");
+
+                answer.textContent =
+                    item.answer;
+
+                result.appendChild(question);
+                result.appendChild(answer);
+
+                if (
+                    item.sources &&
+                    item.sources.length > 0
+                ) {
+                    const sourceTitle =
+                        document.createElement("strong");
+
+                    sourceTitle.textContent =
+                        "Sources";
+
+                    result.appendChild(sourceTitle);
+
+                    for (const source of item.sources) {
+                        const sourceElement =
+                            document.createElement("div");
+
+                        sourceElement.className =
+                            "source";
+
+                        let label =
+                            source.source;
+
+                        if (source.page) {
+                            label +=
+                                ` (page ${source.page})`;
+                        }
+
+                        sourceElement.textContent =
+                            `${label}: ${source.text}`;
+
+                        result.appendChild(
+                            sourceElement
+                        );
+                    }
+                }
+
+                container.appendChild(result);
+            }
+        }
+    </script>
+
+</body>
+</html>
