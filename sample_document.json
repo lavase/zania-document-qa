@@ -1,0 +1,8 @@
+{
+  "company": "Example Corp",
+  "cloud_provider": "AWS",
+  "hosting": {
+    "primary_region": "us-west-2",
+    "backup_region": "us-east-1"
+  }
+}
